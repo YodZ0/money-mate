@@ -8,6 +8,7 @@ from .repository import UpdateSchemaUUID as UpdateSchemaUUID
 
 from .request_response import ResponseSchema as ResponseSchema
 from .request_response import RequestSchema as RequestSchema
+from .request_response import StatusOKResponseSchema as StatusOKResponseSchema
 
 from .exceptions import BusinessLogicExceptionSchema as BusinessLogicExceptionSchema
 from .exceptions import ModelAlreadyExistsErrorSchema as ModelAlreadyExistsErrorSchema

@@ -24,3 +24,11 @@ class ResponseSchema(BaseModel):
             serialization_alias=to_camel,
         )
     )
+
+
+class StatusOKResponseSchema(ResponseSchema):
+    """
+    Status OK schema.
+    """
+
+    status: str = "OK"
