@@ -1,2 +1,5 @@
 from .category import CategoryServiceProtocol as CategoryServiceProtocol
 from .category import CategoryServiceImpl as CategoryServiceImpl
+
+from .category_type import CategoryTypeServiceProtocol as CategoryTypeServiceProtocol
+from .category_type import CategoryTypeServiceImpl as CategoryTypeServiceImpl
