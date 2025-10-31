@@ -3,7 +3,12 @@ from fastapi import Depends
 
 from src.core.database import SessionDep
 from .repositories import CategoryRepositoryImpl, CategoryTypeRepositoryImpl
-from .services import CategoryServiceProtocol, CategoryServiceImpl
+from .services import (
+    CategoryServiceProtocol,
+    CategoryServiceImpl,
+    CategoryTypeServiceProtocol,
+    CategoryTypeServiceImpl,
+)
 
 
 #### REPOSITORIES ####
@@ -31,7 +36,18 @@ def get_category_service(repository: CategoryRepository) -> CategoryServiceProto
     return CategoryServiceImpl(repository)
 
 
+def get_category_type_service(
+    repository: CategoryTypeRepository,
+) -> CategoryTypeServiceProtocol:
+    return CategoryTypeServiceImpl(repository)
+
+
 CategoryService = Annotated[
     CategoryServiceProtocol,
     Depends(get_category_service),
+]
+
+CategoryTypeService = Annotated[
+    CategoryTypeServiceProtocol,
+    Depends(get_category_type_service),
 ]
