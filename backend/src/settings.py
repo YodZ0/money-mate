@@ -29,6 +29,11 @@ class DatabaseConfig(BaseModel):
     name: str
     provider: str = "postgresql+asyncpg"
 
+    echo: bool = False
+    echo_pool: bool = False
+    max_overflow: int = 10
+    pool_size: int = 50
+
     @property
     def dsn(self) -> str:
         return f"{self.provider}://{self.user}:{self.password}@{self.host}:{self.port}/{self.name}"
