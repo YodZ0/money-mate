@@ -4,6 +4,7 @@ package-mode = false
 [tool.poetry.group.dev.dependencies]
 black = "^25.9.0"
 pytest = "^8.4.2"
+pytest-asyncio = "^1.2.0"
 
 [project]
 name = "money-mate-backend"
@@ -25,6 +26,7 @@ requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.pytest.ini_options]
+asyncio_mode = "auto"
 pythonpath = [".", "src"]
 testpaths = "tests"
 addopts = "-vvv"
