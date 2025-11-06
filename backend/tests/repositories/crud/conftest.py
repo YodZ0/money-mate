@@ -1,11 +1,10 @@
 import pytest
-from typing import AsyncIterator
-from contextlib import asynccontextmanager
 
 from sqlalchemy import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.core.database import DatabaseProvider
+from src.core.session_manager import SessionManagerImpl
 from src.core.models.base import Base
 
 from tests.settings import settings
@@ -49,4 +48,4 @@ async def prepare_db():
 async def crud_repository():
     db_provider = DatabaseProvider(settings.db.dsn)
     async with db_provider.session_factory() as session:
-        yield CrudTestRepository(session)
+        yield CrudTestRepository(SessionManagerImpl(session))  # type: ignore
