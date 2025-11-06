@@ -67,7 +67,10 @@ async def test_create(crud_repository):
     """
     Тест метода create.
     """
-    pass
+    expected = CrudTestReadSchema(id=11, label="Test model 11")
+    create_model = CrudTestCreateSchema(label="Test model 11")
+    new_obj = await crud_repository.create(create_model)
+    assert expected == new_obj
 
 
 @pytest.mark.asyncio
