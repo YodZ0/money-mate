@@ -92,14 +92,14 @@ async def test_update(crud_repository):
 
 
 @pytest.mark.asyncio
-async def test_delete():
+async def test_delete(crud_repository):
     """
     Тест метода delete.
     """
-    # 1. Create object
-    # 2. Read object by Id
-    # 3. Assert Create object == Read object
-    # 4. Delete object by Id
-    # 5. Read object by Id
-    # 6. Assert result == None
-    pass
+    objects_before_delete = await crud_repository.get_all()
+    assert 11 == len(objects_before_delete)
+
+    await crud_repository.delete(id=11)
+
+    objects_after_delete = await crud_repository.get_all()
+    assert 10 == len(objects_after_delete)
