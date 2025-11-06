@@ -1,7 +1,7 @@
 from typing import Annotated
 from fastapi import Depends
 
-from src.core.database import SessionDep
+from src.core.depends import SessionManager
 from .repositories import CategoryRepositoryImpl, CategoryTypeRepositoryImpl
 from .services import (
     CategoryServiceProtocol,
@@ -12,12 +12,16 @@ from .services import (
 
 
 #### REPOSITORIES ####
-def get_category_repository(session: SessionDep) -> CategoryRepositoryImpl:
-    return CategoryRepositoryImpl(session=session)
+def get_category_repository(
+    session_manager: SessionManager,
+) -> CategoryRepositoryImpl:
+    return CategoryRepositoryImpl(session_manager)
 
 
-def get_category_type_repository(session: SessionDep) -> CategoryTypeRepositoryImpl:
-    return CategoryTypeRepositoryImpl(session=session)
+def get_category_type_repository(
+    session_manager: SessionManager,
+) -> CategoryTypeRepositoryImpl:
+    return CategoryTypeRepositoryImpl(session_manager)
 
 
 CategoryRepository = Annotated[
