@@ -29,7 +29,7 @@ async def create_models(
         await session.execute(stmt)
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="function", autouse=True)
 async def prepare_db():
     db_provider = DatabaseProvider(settings.db.dsn)
     async with db_provider.engine.begin() as conn:
