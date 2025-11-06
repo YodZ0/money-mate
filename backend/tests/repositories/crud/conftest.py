@@ -12,43 +12,41 @@ from tests.settings import settings
 
 from .crud import CrudTestRepository
 from .models import CrudTestModel
-from .schemas import CrudTestReadSchema
+from .schemas import CrudTestCreateSchema
 
 
-MODELS_TO_CREATE = [
-    CrudTestReadSchema(id=i, label=f"Test model {i}") for i in range(1, 11)
-]
+MODELS_TO_CREATE = [CrudTestCreateSchema(label=f"Test model {i}") for i in range(1, 11)]
 
 
 async def create_models(
     session: AsyncSession,
-    models_to_create: list[CrudTestReadSchema],
+    models_to_create: list[CrudTestCreateSchema],
 ) -> None:
     """
     Создаем тестовые данные в БД.
     """
     for model in models_to_create:
-        stmt = insert(CrudTestModel).values(**model.model_dump())
+        stmt = insert(CrudTestModel).values(**model.model_dump(exclude={"id"}))
         await session.execute(stmt)
 
 
-@asynccontextmanager
-async def make_crud_repository(
-    models_to_create: list[CrudTestReadSchema],
-) -> AsyncIterator[CrudTestRepository]:
+@pytest.fixture(scope="session", autouse=True)
+async def prepare_db():
     db_provider = DatabaseProvider(settings.db.dsn)
     async with db_provider.engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     try:
         async with db_provider.session_factory() as session:
-            await create_models(session, models_to_create)
-            yield CrudTestRepository(session)
+            await create_models(session, MODELS_TO_CREATE)
+            await session.commit()
+        yield
     finally:
         async with db_provider.engine.begin() as conn:
             await conn.run_sync(Base.metadata.drop_all)
 
 
 @pytest.fixture
-async def crud_repository() -> AsyncIterator[CrudTestRepository]:
-    async with make_crud_repository(MODELS_TO_CREATE) as repository:
-        yield repository
+async def crud_repository():
+    db_provider = DatabaseProvider(settings.db.dsn)
+    async with db_provider.session_factory() as session:
+        yield CrudTestRepository(session)
