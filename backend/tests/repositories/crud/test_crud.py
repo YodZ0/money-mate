@@ -74,17 +74,21 @@ async def test_create(crud_repository):
 
 
 @pytest.mark.asyncio
-async def test_update():
+async def test_update(crud_repository):
     """
     Тест метода update.
     """
-    # 1. Create object
-    # 2. Read object by Id
-    # 3. Assert Create object == Read object
-    # 4. Update object
-    # 5. Read object by Id
-    # 6. Assert Update object == Read object
-    pass
+    expected_before_update = CrudTestReadSchema(id=1, label="Test model 1")
+    obj_before_update = await crud_repository.get(id=1)
+    assert expected_before_update == obj_before_update
+
+    expected_after_update = CrudTestReadSchema(id=1, label="Updated Test model 1")
+    update_obj = CrudTestUpdateSchema(id=1, label="Updated Test model 1")
+    obj_after_update = await crud_repository.update(update_obj)
+    assert expected_after_update == obj_after_update
+
+    updated_object = await crud_repository.get(id=1)
+    assert expected_after_update == updated_object
 
 
 @pytest.mark.asyncio
