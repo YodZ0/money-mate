@@ -32,14 +32,14 @@ class CrudBaseRepository(
     read_schema_type: type[ReadSchemaBaseType]
 
     def __init__(self, session_manager: SessionManagerProtocol) -> None:
-        self.session_manager = session_manager
+        self._session_manager = session_manager
 
     async def get(self, id: IdType) -> ReadSchemaBaseType:
         """
         Получаем модель по идентификатору.
         """
         query = select(self.model_type).where(self.model_type.id == id)  # type: ignore
-        async with self.session_manager.get_session() as s:
+        async with self._session_manager.get_session() as s:
             model = (await s.execute(query)).scalar_one_or_none()
             if model is None:
                 raise ModelNotFoundError(self.model_type, model_id=id)
@@ -63,7 +63,7 @@ class CrudBaseRepository(
         Получаем список моделей по идентификаторам.
         """
         query = select(self.model_type).where(self.model_type.id.in_(ids))
-        async with self.session_manager.get_session() as s:
+        async with self._session_manager.get_session() as s:
             models = (await s.execute(query)).scalars().all()
             self._check_get_by_ids_strict(ids, models, strict)
             return [self._model_validate(model) for model in models]
@@ -73,7 +73,7 @@ class CrudBaseRepository(
         Получаем список всех моделей.
         """
         query = select(self.model_type)
-        async with self.session_manager.get_session() as s:
+        async with self._session_manager.get_session() as s:
             models = (await s.execute(query)).scalars().all()
             return [self._model_validate(model) for model in models]
 
@@ -86,7 +86,7 @@ class CrudBaseRepository(
             .values(**create_obj.model_dump(exclude={"id"}))
             .returning(self.model_type)
         )
-        async with self.session_manager.get_session() as s:
+        async with self._session_manager.get_session() as s:
             try:
                 model = (await s.execute(statement)).scalar_one()
                 return self._model_validate(model)
@@ -107,7 +107,7 @@ class CrudBaseRepository(
             .values(**update_obj.model_dump(exclude={"id"}, exclude_unset=True))
             .returning(self.model_type)
         )
-        async with self.session_manager.get_session() as s:
+        async with self._session_manager.get_session() as s:
             try:
                 model = (await s.execute(statement)).scalar_one_or_none()
                 if model is None:
@@ -123,7 +123,7 @@ class CrudBaseRepository(
         """
         Удаляем модель по идентификатору.
         """
-        async with self.session_manager.get_session() as s:
+        async with self._session_manager.get_session() as s:
             statement = delete(self.model_type).where(self.model_type.id == id)  # type: ignore
             await s.execute(statement)
 
