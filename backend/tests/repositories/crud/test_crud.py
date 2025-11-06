@@ -38,9 +38,7 @@ async def test_get_by_ids(crud_repository):
     """
     ids = [1, 2, 3]
     expected_list = [
-        CrudTestReadSchema(id=1, label="Test model 1"),
-        CrudTestReadSchema(id=2, label="Test model 2"),
-        CrudTestReadSchema(id=3, label="Test model 3"),
+        CrudTestReadSchema(id=i, label=f"Test model {i}") for i in range(1, 4)
     ]
     result = await crud_repository.get_by_ids(ids)
     assert len(ids) == len(result)
@@ -97,9 +95,9 @@ async def test_delete(crud_repository):
     Тест метода delete.
     """
     objects_before_delete = await crud_repository.get_all()
-    assert 11 == len(objects_before_delete)
+    assert 10 == len(objects_before_delete)
 
-    await crud_repository.delete(id=11)
+    await crud_repository.delete(id=10)
 
     objects_after_delete = await crud_repository.get_all()
-    assert 10 == len(objects_after_delete)
+    assert 9 == len(objects_after_delete)
