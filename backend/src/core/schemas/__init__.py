@@ -12,3 +12,4 @@ from .request_response import StatusOKResponseSchema as StatusOKResponseSchema
 
 from .exceptions import BusinessLogicExceptionSchema as BusinessLogicExceptionSchema
 from .exceptions import ModelAlreadyExistsErrorSchema as ModelAlreadyExistsErrorSchema
+from .exceptions import ExceptionInfoSchema as ExceptionInfoSchema
