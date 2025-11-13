@@ -82,6 +82,36 @@ async def test_create(crud_repository):
 
 
 @pytest.mark.asyncio
+async def test_create_already_exists(crud_repository):
+    """
+    Тест метода create на обработку исключения UniqueViolationError.
+    """
+    with pytest.raises(ModelAlreadyExistsError) as exc_info:
+        existing_model = CrudTestCreateSchema.model_validate(
+            {"label": "Test model 1", "parentId": 1}
+        )
+        await crud_repository.create(existing_model)
+    assert exc_info.value.model == CrudTestModel
+    assert exc_info.value.field == "label"
+    assert exc_info.value.value == "Test model 1"
+    assert exc_info.value.action == ModelActionEnum.INSERT
+
+
+@pytest.mark.asyncio
+async def test_create_with_integrity_error(crud_repository):
+    """
+    Тест метода create на обработку общей ошибки создания/обновления модели.
+    """
+    with pytest.raises(ModelIntegrityError) as exc_info:
+        non_existing_parent_model = CrudTestCreateSchema.model_validate(
+            {"label": "Test model 12", "parentId": 2}
+        )
+        await crud_repository.create(non_existing_parent_model)
+    assert exc_info.value.model == CrudTestModel
+    assert exc_info.value.action == ModelActionEnum.INSERT
+
+
+@pytest.mark.asyncio
 async def test_update(crud_repository):
     """
     Тест метода update.
@@ -102,6 +132,61 @@ async def test_update(crud_repository):
 
 
 @pytest.mark.asyncio
+async def test_update_already_exists(crud_repository):
+    """
+    Тест метода update на обработку исключения UniqueViolationError.
+    """
+    # Check existing model with id=10
+    expected_before_update = CrudTestReadSchema(
+        id=10, label="Test model 10", parent_id=1
+    )
+    before_update = await crud_repository.get(id=10)
+    assert expected_before_update == before_update
+
+    # Try to fail update because of unique label
+    with pytest.raises(ModelAlreadyExistsError) as exc_info:
+        obj_update = CrudTestUpdateSchema(id=10, label="Test model 1")
+        await crud_repository.update(obj_update)
+    assert exc_info.value.model == CrudTestModel
+    assert exc_info.value.action == ModelActionEnum.UPDATE
+
+    # Check if model did not change
+    expected_after_update = await crud_repository.get(id=10)
+    assert expected_after_update == expected_before_update
+
+
+@pytest.mark.asyncio
+async def test_update_with_integrity_error(crud_repository):
+    """
+    Тест метода update на обработку общей ошибки создания/обновления модели.
+    """
+    # Check existing model with id=10
+    expected_before_update = CrudTestReadSchema(
+        id=10, label="Test model 10", parent_id=1
+    )
+    before_update = await crud_repository.get(id=10)
+    assert expected_before_update == before_update
+
+    # Try to fail update because of nonexistent parent id
+    with pytest.raises(ModelIntegrityError) as exc_info:
+        obj_update = CrudTestUpdateSchema.model_validate({"id": 10, "parentId": 99})
+        await crud_repository.update(obj_update)
+    assert exc_info.value.model == CrudTestModel
+    assert exc_info.value.action == ModelActionEnum.UPDATE
+
+    # Try to fail update because of nullable parent field
+    with pytest.raises(ModelIntegrityError) as exc_info:
+        obj_update = CrudTestUpdateSchema.model_validate({"id": 10, "parentId": None})
+        await crud_repository.update(obj_update)
+    assert exc_info.value.model == CrudTestModel
+    assert exc_info.value.action == ModelActionEnum.UPDATE
+
+    # Check if model did not change
+    expected_after_update = await crud_repository.get(id=10)
+    assert expected_after_update == expected_before_update
+
+
+@pytest.mark.asyncio
 async def test_delete(crud_repository):
     """
     Тест метода delete.
@@ -112,6 +197,15 @@ async def test_delete(crud_repository):
     await crud_repository.delete(id=10)
 
     objects_after_delete = await crud_repository.get_all()
-    assert 9 == len(objects_after_delete)
     assert len(objects_after_delete) == 9
 
+
+@pytest.mark.asyncio
+async def test_delete_with_integrity_error(crud_parent_repository):
+    """
+    Тест метода delete на обработку исключения ForeignKeyViolationError.
+    """
+    with pytest.raises(ModelIntegrityError) as exc_info:
+        await crud_parent_repository.delete(id=1)
+    assert exc_info.value.model == CrudParentTestModel
+    assert exc_info.value.action == ModelActionEnum.DELETE
