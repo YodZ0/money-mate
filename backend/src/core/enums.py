@@ -33,3 +33,14 @@ class ModelActionEnum(StrEnum):
     UPDATE = auto()
     UPSERT = auto()
     DELETE = auto()
+
+
+class DatabaseErrorEnum(StrEnum):
+    """
+    Ошибка базы данных.
+    """
+
+    INTEGRITY_ERROR = auto()
+    UNIQUE_VIOLATION_ERROR = auto()
+    FOREIGN_KEY_VIOLATION_ERROR = auto()
+    NOT_NULL_VIOLATION_ERROR = auto()
