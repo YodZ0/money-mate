@@ -94,18 +94,43 @@ class ModelAlreadyExistsError(BusinessLogicException):
     Ошибка, возникающая при попытке создать модель с существующим уникальным полем.
     """
 
-    def __init__(self, field: str, message: str, *args: object) -> None:
+    def __init__(
+        self,
+        model: type[ModelType] | str,
+        *args: object,
+        field: str,
+        value: str,
+        action: ModelActionEnum,
+    ) -> None:
         super().__init__(*args)
+        self.model = model
         self.field = field
-        self.message = message
+        self.value = value
+        self.action = action
 
     @property
     def msg(self) -> str:
-        return self.message
+        msg = "Ошибка при"
+        model_name = self.model if isinstance(self.model, str) else self.model.__name__
+        match self.action:
+            case ModelActionEnum.INSERT:
+                msg += f" создании модели {model_name}: "
+            case ModelActionEnum.UPDATE:
+                msg += f" обновлении модели {model_name}: "
+            case ModelActionEnum.UPSERT:
+                msg += f" создании или обновлении модели {model_name}: "
+        msg += (
+            f"модель с уникальным полем ({self.field})=({self.value}) уже существует."
+        )
+        return msg
 
     def get_schema(self, debug: bool) -> BusinessLogicExceptionSchema:
         return ModelAlreadyExistsErrorSchema.model_validate(
-            {**super().get_schema(debug).model_dump(), "field": self.field}
+            {
+                **super().get_schema(debug).model_dump(),
+                "field": self.field,
+                "value": self.value,
+            }
         )
 
 
