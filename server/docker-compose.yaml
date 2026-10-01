@@ -1,0 +1,88 @@
+services:
+  # --- DATABASE ---
+  db:
+    image: postgres:18.6-alpine
+    container_name: mm-postgres-db
+    environment:
+      POSTGRES_USER: ${DB__USER}
+      POSTGRES_PASSWORD: ${DB__PASSWORD}
+      POSTGRES_DB: ${DB__NAME}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB" ]
+      interval: 10s
+      timeout: 2s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    volumes:
+      - mm_pg_data:/var/lib/postgresql
+
+  # --- MIGRATIONS ---
+  # A one-shot sidecar rather than a step in the backend's entrypoint: with N
+  # workers or N replicas, an entrypoint would run `upgrade head` N times in
+  # parallel against the same database.
+  #
+  # No `container_name`: the service is disposable, and a fixed name makes a
+  # second `up` collide with the exited container from the first.
+  #
+  # `alembic/env.py` reads `settings.db.url`, so the same `.env` the backend
+  # gets is what points it at the right database - `DB__HOST` must be `db`
+  # inside compose, as noted in `.env.template`. Redis is not involved.
+  migrate:
+    build:
+      context: .
+    env_file:
+      - .env
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  # --- BACKEND ---
+  backend:
+    container_name: mm-backend
+    build:
+      context: .
+    env_file:
+      - .env
+    environment:
+      UVICORN_HOST: ${RUN__HOST}
+      UVICORN_PORT: ${RUN__PORT}
+      UVICORN_WORKERS: ${RUN__WORKERS}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      # Serving requests against a schema that has not been upgraded yet is the
+      # failure this ordering exists to prevent.
+      migrate:
+        condition: service_completed_successfully
+
+  # --- CACHE ---
+  redis:
+    image: redis:8.10.1-alpine
+    container_name: mm-redis-cache
+    restart: unless-stopped
+    command: >
+      redis-server
+      --requirepass ${REDIS__PASSWORD:?REDIS_PASSWORD is required}
+      --appendonly yes
+      --maxmemory 256mb
+      --maxmemory-policy allkeys-lru
+    environment:
+      REDIS_PASSWORD: ${REDIS__PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $$REDIS_PASSWORD ping | grep -q PONG"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+    volumes:
+      - mm_redis_data:/data
+
+volumes:
+  mm_pg_data:
+  mm_redis_data:
