@@ -1,2 +1,0 @@
-from .category import CategoryRepositoryImpl as CategoryRepositoryImpl
-from .category_type import CategoryTypeRepositoryImpl as CategoryTypeRepositoryImpl
