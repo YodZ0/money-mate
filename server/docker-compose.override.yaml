@@ -1,0 +1,38 @@
+services:
+  # --- DATABASE ---
+  db:
+    ports:
+      - "127.0.0.1:${DB__HOST_PORT:-5432}:5432"
+
+  # --- BACKEND ---
+  backend:
+    build:
+      target: dev
+    environment:
+      UVICORN_RELOAD: ${RUN__RELOAD}
+    ports:
+      - "127.0.0.1:${RUN__PORT:-8000}:8000"
+    volumes:
+      - ./src:/app/src
+      - ./tests:/app/tests
+      - ./alembic:/app/alembic
+      - ./.logging.yaml:/app/.logging.yaml
+
+  # --- CACHE ---
+  redis:
+    ports:
+      - "127.0.0.1:${REDIS__PORT:-6379}:6379"
+
+  redisui:
+    image: redis/redisinsight:3.8
+    container_name: mm-redis-ui
+    restart: always
+    ports:
+      - "127.0.0.1:5540:5540"
+    volumes:
+      - redisinsight_data:/data
+    depends_on:
+      - redis
+
+volumes:
+  redisinsight_data:
